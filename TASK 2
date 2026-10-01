@@ -1,0 +1,152 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.metrics import silhouette_score, davies_bouldin_score
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.preprocessing import StandardScaler
+from sklearn.datasets import load_iris
+
+
+# Load the Iris dataset
+data = load_iris()
+
+df = pd.DataFrame(
+    data.data,
+    columns=data.feature_names
+)
+
+
+# Standardize the data
+scaler = StandardScaler()
+
+df_scaled = scaler.fit_transform(df)
+
+
+# Apply K-Means Clustering
+kmeans = KMeans(
+    n_clusters=3,
+    random_state=42,
+    n_init=10
+)
+
+kmeans_labels = kmeans.fit_predict(df_scaled)
+
+
+# Apply Hierarchical Clustering
+hierarchical = AgglomerativeClustering(
+    n_clusters=3,
+    linkage='ward'
+)
+
+hierarchical_labels = hierarchical.fit_predict(df_scaled)
+
+
+# Evaluation Metrics
+
+# K-Means metrics
+kmeans_silhouette = silhouette_score(
+    df_scaled,
+    kmeans_labels
+)
+
+kmeans_davies_bouldin = davies_bouldin_score(
+    df_scaled,
+    kmeans_labels
+)
+
+
+# Hierarchical Clustering metrics
+hierarchical_silhouette = silhouette_score(
+    df_scaled,
+    hierarchical_labels
+)
+
+hierarchical_davies_bouldin = davies_bouldin_score(
+    df_scaled,
+    hierarchical_labels
+)
+
+
+# Print Evaluation Scores
+print("K-Means Clustering:")
+
+print(
+    f"Silhouette Score: {kmeans_silhouette:.4f}"
+)
+
+print(
+    f"Davies-Bouldin Index: {kmeans_davies_bouldin:.4f}"
+)
+
+print()
+
+
+print("Hierarchical Clustering:")
+
+print(
+    f"Silhouette Score: {hierarchical_silhouette:.4f}"
+)
+
+print(
+    f"Davies-Bouldin Index: {hierarchical_davies_bouldin:.4f}"
+)
+
+
+# Plot Dendrogram for Hierarchical Clustering
+plt.figure(figsize=(10, 5))
+
+linkage_matrix = linkage(
+    df_scaled,
+    method='ward'
+)
+
+dendrogram(linkage_matrix)
+
+plt.title("Hierarchical Clustering Dendrogram")
+plt.xlabel("Samples")
+plt.ylabel("Distance")
+
+plt.show()
+
+
+# Scatter Plot to Visualize Clusters
+plt.figure(figsize=(12, 5))
+
+
+# K-Means Clustering Plot
+plt.subplot(1, 2, 1)
+
+sns.scatterplot(
+    x=df_scaled[:, 0],
+    y=df_scaled[:, 1],
+    hue=kmeans_labels,
+    palette='viridis'
+)
+
+plt.title("K-Means Clustering")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+
+
+# Hierarchical Clustering Plot
+plt.subplot(1, 2, 2)
+
+sns.scatterplot(
+    x=df_scaled[:, 0],
+    y=df_scaled[:, 1],
+    hue=hierarchical_labels,
+    palette='coolwarm'
+)
+
+plt.title("Hierarchical Clustering")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+
+
+# Display both plots
+plt.tight_layout()
+
+plt.show()
