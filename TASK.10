@@ -1,0 +1,335 @@
+# ============================================================
+# TASK 10 - HYPERPARAMETER TUNING OF MLP
+# ============================================================
+
+import numpy as np
+import tensorflow as tf
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+# ============================================================
+# 1. LOAD BREAST CANCER DATASET
+# ============================================================
+
+data = load_breast_cancer()
+
+X = data.data
+y = data.target
+
+# ============================================================
+# 2. TRAIN TEST SPLIT
+# ============================================================
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# ============================================================
+# 3. STANDARDIZATION
+# ============================================================
+
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# ============================================================
+# 4. FUNCTION TO CREATE MLP
+# ============================================================
+
+def create_mlp(
+    hidden_units=16,
+    activation='relu',
+    optimizer='adam'
+):
+
+    model = Sequential()
+
+    model.add(
+        Dense(
+            hidden_units,
+            activation=activation,
+            input_shape=(X_train.shape[1],)
+        )
+    )
+
+    model.add(
+        Dense(
+            hidden_units,
+            activation=activation
+        )
+    )
+
+    model.add(
+        Dense(
+            1,
+            activation='sigmoid'
+        )
+    )
+
+    model.compile(
+        optimizer=optimizer,
+        loss='binary_crossentropy',
+        metrics=['accuracy']
+    )
+
+    return model
+
+
+# ============================================================
+# 5. BASELINE MODEL
+# ============================================================
+
+print("Training Baseline Model...")
+
+baseline_model = create_mlp(
+    hidden_units=16,
+    activation='relu',
+    optimizer='adam'
+)
+
+baseline_model.fit(
+    X_train,
+    y_train,
+    epochs=10,
+    batch_size=32,
+    verbose=0
+)
+
+baseline_predictions = (
+    baseline_model.predict(
+        X_test,
+        verbose=0
+    ) > 0.5
+).astype(int).ravel()
+
+baseline_accuracy = accuracy_score(
+    y_test,
+    baseline_predictions
+)
+
+print(
+    "Baseline Test Accuracy:",
+    round(baseline_accuracy, 4)
+)
+
+
+# ============================================================
+# 6. GRID SEARCH
+# ============================================================
+
+print("\nPerforming Grid Search...")
+
+hidden_units_list = [8, 16, 32]
+activation_list = ['relu', 'tanh']
+optimizer_list = ['adam', 'sgd']
+batch_size_list = [16, 32]
+epochs_list = [10, 20]
+
+best_accuracy = 0
+best_params = None
+
+for hidden_units in hidden_units_list:
+
+    for activation in activation_list:
+
+        for optimizer in optimizer_list:
+
+            for batch_size in batch_size_list:
+
+                for epochs in epochs_list:
+
+                    model = create_mlp(
+                        hidden_units=hidden_units,
+                        activation=activation,
+                        optimizer=optimizer
+                    )
+
+                    model.fit(
+                        X_train,
+                        y_train,
+                        epochs=epochs,
+                        batch_size=batch_size,
+                        verbose=0
+                    )
+
+                    predictions = (
+                        model.predict(
+                            X_test,
+                            verbose=0
+                        ) > 0.5
+                    ).astype(int).ravel()
+
+                    accuracy = accuracy_score(
+                        y_test,
+                        predictions
+                    )
+
+                    if accuracy > best_accuracy:
+
+                        best_accuracy = accuracy
+
+                        best_params = {
+                            'hidden_units': hidden_units,
+                            'activation': activation,
+                            'optimizer': optimizer,
+                            'batch_size': batch_size,
+                            'epochs': epochs
+                        }
+
+
+print("\nBest Hyperparameters:")
+print(best_params)
+
+print(
+    "Best Grid Search Accuracy:",
+    round(best_accuracy, 4)
+)
+
+
+# ============================================================
+# 7. RANDOM SEARCH
+# ============================================================
+
+print("\nPerforming Random Search...")
+
+np.random.seed(42)
+
+best_random_accuracy = 0
+best_random_params = None
+
+for i in range(5):
+
+    hidden_units = np.random.choice(
+        hidden_units_list
+    )
+
+    activation = np.random.choice(
+        activation_list
+    )
+
+    optimizer = np.random.choice(
+        optimizer_list
+    )
+
+    batch_size = np.random.choice(
+        batch_size_list
+    )
+
+    epochs = np.random.choice(
+        epochs_list
+    )
+
+    model = create_mlp(
+        hidden_units=hidden_units,
+        activation=activation,
+        optimizer=optimizer
+    )
+
+    model.fit(
+        X_train,
+        y_train,
+        epochs=epochs,
+        batch_size=batch_size,
+        verbose=0
+    )
+
+    predictions = (
+        model.predict(
+            X_test,
+            verbose=0
+        ) > 0.5
+    ).astype(int).ravel()
+
+    accuracy = accuracy_score(
+        y_test,
+        predictions
+    )
+
+    if accuracy > best_random_accuracy:
+
+        best_random_accuracy = accuracy
+
+        best_random_params = {
+            'hidden_units': hidden_units,
+            'activation': activation,
+            'optimizer': optimizer,
+            'batch_size': batch_size,
+            'epochs': epochs
+        }
+
+
+print("\nBest Hyperparameters (Random Search):")
+print(best_random_params)
+
+print(
+    "Best Random Search Accuracy:",
+    round(best_random_accuracy, 4)
+)
+
+
+# ============================================================
+# 8. TRAIN OPTIMIZED MODEL
+# ============================================================
+
+print("\nTraining Optimized Model...")
+
+optimized_model = create_mlp(
+    hidden_units=best_params['hidden_units'],
+    activation=best_params['activation'],
+    optimizer=best_params['optimizer']
+)
+
+optimized_model.fit(
+    X_train,
+    y_train,
+    epochs=best_params['epochs'],
+    batch_size=best_params['batch_size'],
+    verbose=0
+)
+
+optimized_predictions = (
+    optimized_model.predict(
+        X_test,
+        verbose=0
+    ) > 0.5
+).astype(int).ravel()
+
+optimized_accuracy = accuracy_score(
+    y_test,
+    optimized_predictions
+)
+
+
+# ============================================================
+# 9. FINAL OUTPUT
+# ============================================================
+
+print("\n========================================")
+print("HYPERPARAMETER TUNING RESULTS")
+print("========================================")
+
+print(
+    f"Baseline Test Accuracy: "
+    f"{baseline_accuracy:.4f}"
+)
+
+print(
+    f"Optimized Test Accuracy: "
+    f"{optimized_accuracy:.4f}"
+)
+
+print(
+    f"Improvement: "
+    f"{(optimized_accuracy - baseline_accuracy):.4f}"
+)
