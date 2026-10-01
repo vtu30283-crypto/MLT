@@ -1,0 +1,72 @@
+# ============================================================
+# TASK 4A - APRIORI ALGORITHM
+# ============================================================
+
+!pip install -q mlxtend
+
+import pandas as pd
+
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+
+# ------------------------------------------------------------
+# Dataset
+# ------------------------------------------------------------
+
+buying_books_data = [
+    ['Book1', 'Book2', 'Book3'],
+    ['Book2', 'Book3', 'Book4'],
+    ['Book1', 'Book3', 'Book5'],
+    ['Book2', 'Book4', 'Book5']
+]
+
+# ------------------------------------------------------------
+# Convert to one-hot encoding
+# ------------------------------------------------------------
+
+te = TransactionEncoder()
+
+te_ary = te.fit(
+    buying_books_data
+).transform(
+    buying_books_data
+)
+
+df_buying_books = pd.DataFrame(
+    te_ary,
+    columns=te.columns_
+)
+
+# ------------------------------------------------------------
+# Apriori
+# ------------------------------------------------------------
+
+min_support = 0.2
+
+frequent_itemsets = apriori(
+    df_buying_books,
+    min_support=min_support,
+    use_colnames=True
+)
+
+# ------------------------------------------------------------
+# Association Rules
+# ------------------------------------------------------------
+
+min_confidence = 0.5
+
+rules = association_rules(
+    frequent_itemsets,
+    metric='confidence',
+    min_threshold=min_confidence
+)
+
+# ------------------------------------------------------------
+# Output
+# ------------------------------------------------------------
+
+print("Frequent Itemsets:")
+print(frequent_itemsets)
+
+print("\nAssociation Rules:")
+print(rules)
