@@ -1,0 +1,135 @@
+# ============================================================
+# TASK 5 - RANDOM FOREST CLASSIFICATION
+# ============================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn import metrics
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    classification_report
+)
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris
+
+# ------------------------------------------------------------
+# Load Iris dataset
+# ------------------------------------------------------------
+
+iris = load_iris()
+
+X = iris.data
+y = iris.target
+
+# ------------------------------------------------------------
+# Split dataset
+# ------------------------------------------------------------
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.3,
+    random_state=42
+)
+
+# ------------------------------------------------------------
+# Initialize Random Forest
+# ------------------------------------------------------------
+
+classifier = RandomForestClassifier(
+    n_estimators=100,
+    random_state=42
+)
+
+# ------------------------------------------------------------
+# Train model
+# ------------------------------------------------------------
+
+classifier.fit(
+    X_train,
+    y_train
+)
+
+# ------------------------------------------------------------
+# Predictions
+# ------------------------------------------------------------
+
+predictions = classifier.predict(X_test)
+
+# ------------------------------------------------------------
+# Evaluation
+# ------------------------------------------------------------
+
+print(
+    "Accuracy:",
+    accuracy_score(y_test, predictions)
+)
+
+print(
+    "Precision:",
+    precision_score(
+        y_test,
+        predictions,
+        average='weighted'
+    )
+)
+
+print(
+    "Recall:",
+    recall_score(
+        y_test,
+        predictions,
+        average='weighted'
+    )
+)
+
+print(
+    "F1 Score:",
+    f1_score(
+        y_test,
+        predictions,
+        average='weighted'
+    )
+)
+
+# Classification report
+print(
+    "\nClassification Report:\n",
+    classification_report(
+        y_test,
+        predictions
+    )
+)
+
+# ------------------------------------------------------------
+# Confusion Matrix
+# ------------------------------------------------------------
+
+conf_matrix = metrics.confusion_matrix(
+    y_test,
+    predictions
+)
+
+plt.figure(figsize=(8, 6))
+
+sns.heatmap(
+    conf_matrix,
+    annot=True,
+    fmt='d',
+    cmap='Blues',
+    xticklabels=iris.target_names,
+    yticklabels=iris.target_names
+)
+
+plt.xlabel('Predicted')
+plt.ylabel('True')
+plt.title('Confusion Matrix')
+
+plt.show()
