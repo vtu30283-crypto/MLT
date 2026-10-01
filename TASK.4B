@@ -1,0 +1,106 @@
+# ============================================================
+# TASK 4B - FP-GROWTH ALGORITHM
+# ============================================================
+
+!pip install -q pyfpgrowth seaborn
+
+import pyfpgrowth
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ------------------------------------------------------------
+# Sample dataset
+# ------------------------------------------------------------
+
+buying_books_data = [
+    ['Book1', 'Book2', 'Book3'],
+    ['Book2', 'Book3', 'Book4'],
+    ['Book1', 'Book3', 'Book5'],
+    ['Book2', 'Book4', 'Book5']
+]
+
+# ------------------------------------------------------------
+# Convert dataset to transactions
+# ------------------------------------------------------------
+
+transactions = [
+    tuple(transaction)
+    for transaction in buying_books_data
+]
+
+# ------------------------------------------------------------
+# FP-Growth
+# ------------------------------------------------------------
+
+min_support = 2
+
+patterns = pyfpgrowth.find_frequent_patterns(
+    transactions,
+    min_support
+)
+
+# ------------------------------------------------------------
+# Association Rules
+# ------------------------------------------------------------
+
+min_confidence = 0.5
+
+rules = pyfpgrowth.generate_association_rules(
+    patterns,
+    min_confidence
+)
+
+# ------------------------------------------------------------
+# Display output
+# ------------------------------------------------------------
+
+print("Frequent Itemsets:")
+print(patterns)
+
+print("\nAssociation Rules:")
+print(rules)
+
+# ------------------------------------------------------------
+# Prepare graph
+# ------------------------------------------------------------
+
+itemset_labels = [
+    ', '.join(map(str, itemset))
+    for itemset in patterns.keys()
+]
+
+support_values = list(patterns.values())
+
+# ------------------------------------------------------------
+# Graphs exactly as in manual
+# ------------------------------------------------------------
+
+plt.figure(figsize=(36, 24))
+
+# Frequent Itemsets
+plt.subplot(2, 2, 1)
+
+plt.barh(
+    itemset_labels,
+    support_values
+)
+
+plt.xlabel('Support')
+plt.ylabel('Itemsets')
+plt.title('Frequent Itemsets')
+
+# Support Distribution
+plt.subplot(2, 2, 2)
+
+sns.histplot(
+    support_values,
+    bins=10,
+    kde=True
+)
+
+plt.xlabel('Support')
+plt.ylabel('Frequency')
+plt.title('Support Distribution')
+
+plt.tight_layout()
+plt.show()
