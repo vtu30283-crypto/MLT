@@ -1,0 +1,95 @@
+import matplotlib.pyplot as plt
+
+def visualize_candidate_elimination_algorithm(positive_examples, negative_examples):
+    # Initialize hypotheses
+    specific_hypothesis = ['Ø'] * len(positive_examples[0])
+    general_hypothesis = ['?'] * len(positive_examples[0])
+
+    visualization_specific = []
+    visualization_general = []
+
+    # Process positive examples
+    for idx, example in enumerate(positive_examples, start=1):
+        for i in range(len(example)):
+            if specific_hypothesis[i] == 'Ø':
+                specific_hypothesis[i] = example[i]
+            elif specific_hypothesis[i] != example[i]:
+                specific_hypothesis[i] = '?'
+
+        # Update general hypothesis
+        for i in range(len(example)):
+            if specific_hypothesis[i] != '?':
+                general_hypothesis[i] = specific_hypothesis[i]
+
+        visualization_specific.append((idx, " ".join(specific_hypothesis)))
+        visualization_general.append((idx, " ".join(general_hypothesis)))
+
+    # Process negative examples
+    for idx, example in enumerate(negative_examples, start=len(positive_examples)+1):
+        for i in range(len(example)):
+            if specific_hypothesis[i] != '?' and example[i] != specific_hypothesis[i]:
+                general_hypothesis[i] = '?'
+
+        visualization_general.append((idx, " ".join(general_hypothesis)))
+
+    return visualization_specific, visualization_general
+
+
+# Positive training examples
+positive_examples_candidate = [
+    ['Sunny', 'Warm', 'Normal', 'Strong', 'Warm', 'Same'],
+    ['Sunny', 'Warm', 'High', 'Strong', 'Warm', 'Same'],
+    ['Rainy', 'Cold', 'Normal', 'Strong', 'Cool', 'Change'],
+    ['Sunny', 'Hot', 'High', 'Strong', 'Cool', 'Change']
+]
+
+# Negative training examples
+negative_examples_candidate = [
+    ['Rainy', 'Cold', 'High', 'Strong', 'Warm', 'Change'],
+    ['Sunny', 'Warm', 'Normal', 'Weak', 'Cool', 'Same']
+]
+
+# Run Candidate Elimination
+specific, general = visualize_candidate_elimination_algorithm(
+    positive_examples_candidate,
+    negative_examples_candidate
+)
+
+# Print hypotheses
+print("Specific Hypothesis:")
+for item in specific:
+    print(f"Example {item[0]} : {item[1]}")
+
+print("\nGeneral Hypothesis:")
+for item in general:
+    print(f"Step {item[0]} : {item[1]}")
+
+# Plot visualization
+plt.figure(figsize=(12, 6))
+
+plt.plot(
+    [point[0] for point in specific],
+    [point[1] for point in specific],
+    marker='o',
+    label='Specific Hypothesis'
+)
+
+plt.plot(
+    [point[0] for point in general],
+    [point[1] for point in general],
+    marker='x',
+    linestyle='--',
+    label='General Hypothesis'
+)
+
+plt.title('Candidate Elimination Algorithm Visualization')
+plt.xlabel('Example Index')
+plt.ylabel('Hypothesis')
+plt.xticks(range(1, len(positive_examples_candidate) + len(negative_examples_candidate) + 1))
+plt.legend()
+plt.grid(True)
+
+# Save figure (optional)
+# plt.savefig('/content/drive/MyDrive/ML Lab/ExNo02/Candidate_Elimination_Visualization.png', dpi=500)
+
+plt.show()
