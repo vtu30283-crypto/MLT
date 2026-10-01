@@ -1,0 +1,318 @@
+# ============================================================
+# TASK 6 - REGRESSION AND LOGISTIC REGRESSION
+# ============================================================
+
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+
+from sklearn.linear_model import (
+    LinearRegression,
+    LogisticRegression
+)
+
+from sklearn.metrics import (
+    mean_squared_error,
+    r2_score,
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    confusion_matrix
+)
+
+import statsmodels.api as sm
+
+from statsmodels.stats.outliers_influence import (
+    variance_inflation_factor
+)
+
+# ============================================================
+# PART 1 - DIABETES DATASET
+# ============================================================
+
+from sklearn.datasets import load_diabetes
+
+data = load_diabetes()
+
+df = pd.DataFrame(
+    data.data,
+    columns=data.feature_names
+)
+
+df['target'] = data.target
+
+# ------------------------------------------------------------
+# Exploratory Data Analysis
+# ------------------------------------------------------------
+
+print("Dataset Head:")
+print(df.head())
+
+print("\nCorrelation Matrix:")
+print(df.corr())
+
+plt.figure(figsize=(10, 8))
+
+sns.heatmap(
+    df.corr(),
+    annot=True,
+    cmap="coolwarm"
+)
+
+plt.title("Correlation Matrix")
+
+plt.show()
+
+# ============================================================
+# SIMPLE LINEAR REGRESSION
+# ============================================================
+
+X = df[['bmi']]
+y = df['target']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+lin_reg = LinearRegression()
+
+lin_reg.fit(
+    X_train,
+    y_train
+)
+
+y_pred = lin_reg.predict(X_test)
+
+print(
+    "\nSimple Linear Regression Coefficients:",
+    lin_reg.coef_
+)
+
+print(
+    "Intercept:",
+    lin_reg.intercept_
+)
+
+print(
+    "R-squared:",
+    r2_score(y_test, y_pred)
+)
+
+print(
+    "Mean Squared Error:",
+    mean_squared_error(y_test, y_pred)
+)
+
+# Regression graph
+plt.figure(figsize=(8, 6))
+
+plt.scatter(
+    X_test,
+    y_test
+)
+
+plt.plot(
+    X_test,
+    y_pred
+)
+
+plt.xlabel("BMI")
+plt.ylabel("Target")
+plt.title("Simple Linear Regression")
+
+plt.show()
+
+# ============================================================
+# MULTIPLE LINEAR REGRESSION
+# ============================================================
+
+X = df.drop(
+    columns=['target']
+)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+multi_reg = LinearRegression()
+
+multi_reg.fit(
+    X_train,
+    y_train
+)
+
+y_pred_multi = multi_reg.predict(
+    X_test
+)
+
+print(
+    "\nMultiple Regression R-squared:",
+    r2_score(y_test, y_pred_multi)
+)
+
+print(
+    "Mean Squared Error:",
+    mean_squared_error(
+        y_test,
+        y_pred_multi
+    )
+)
+
+# ============================================================
+# MULTICOLLINEARITY - VIF
+# ============================================================
+
+X_with_const = sm.add_constant(X)
+
+vif_data = pd.DataFrame()
+
+vif_data["Feature"] = X.columns
+
+vif_data["VIF"] = [
+    variance_inflation_factor(
+        X_with_const.values,
+        i + 1
+    )
+    for i in range(len(X.columns))
+]
+
+print("\nVariance Inflation Factors:")
+print(vif_data)
+
+# ============================================================
+# LOGISTIC REGRESSION
+# ============================================================
+
+from sklearn.datasets import load_breast_cancer
+
+data = load_breast_cancer()
+
+df_class = pd.DataFrame(
+    data.data,
+    columns=data.feature_names
+)
+
+df_class['target'] = data.target
+
+X = df_class.drop(
+    columns=['target']
+)
+
+y = df_class['target']
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+log_reg = LogisticRegression(
+    max_iter=1000
+)
+
+log_reg.fit(
+    X_train,
+    y_train
+)
+
+y_pred_class = log_reg.predict(
+    X_test
+)
+
+# ------------------------------------------------------------
+# Logistic Regression Coefficients
+# ------------------------------------------------------------
+
+print("\nLogistic Regression Coefficients:")
+
+print(
+    pd.DataFrame({
+        'Feature': X.columns,
+        'Coefficient': log_reg.coef_[0]
+    })
+)
+
+# ------------------------------------------------------------
+# Evaluation
+# ------------------------------------------------------------
+
+accuracy = accuracy_score(
+    y_test,
+    y_pred_class
+)
+
+precision = precision_score(
+    y_test,
+    y_pred_class
+)
+
+recall = recall_score(
+    y_test,
+    y_pred_class
+)
+
+f1 = f1_score(
+    y_test,
+    y_pred_class
+)
+
+roc_auc = roc_auc_score(
+    y_test,
+    log_reg.predict_proba(X_test)[:, 1]
+)
+
+print(
+    f"\nAccuracy: {accuracy:.2f}"
+)
+
+print(
+    f"Precision: {precision:.2f}"
+)
+
+print(
+    f"Recall: {recall:.2f}"
+)
+
+print(
+    f"F1-score: {f1:.2f}"
+)
+
+print(
+    f"ROC-AUC: {roc_auc:.2f}"
+)
+
+# ============================================================
+# CONFUSION MATRIX
+# ============================================================
+
+cm = confusion_matrix(
+    y_test,
+    y_pred_class
+)
+
+plt.figure(figsize=(8, 6))
+
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt='d',
+    cmap='Blues'
+)
+
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix')
+
+plt.show()
